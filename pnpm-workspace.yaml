@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "integrations/*"
+
+# Allow postinstall build scripts (esbuild for tsx, msgpackr-extract for bullmq)
+# so recursive runs and CI don't fail on ignored builds.
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: true
+
+minimumReleaseAgeExclude:
+  - lucide-react@1.38.0

@@ -1,0 +1,28 @@
+{
+	"name": "flowforge",
+	"version": "0.1.0",
+	"description": "Self-hosted workflow automation platform (mini-Zapier). Visual flow builder, pluggable integrations, durable execution.",
+	"private": true,
+	"engines": {
+		"node": ">=22",
+		"pnpm": ">=9"
+	},
+	"packageManager": "pnpm@11.22.0",
+	"scripts": {
+		"dev": "pnpm -r --parallel --filter './apps/*' run dev",
+		"build": "pnpm -r --if-present build",
+		"lint": "pnpm -r --if-present lint && biome check .",
+		"typecheck": "pnpm -r --if-present typecheck",
+		"test": "pnpm -r --if-present test",
+		"test:e2e": "playwright test --config e2e/playwright.config.ts"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.1.0",
+		"@playwright/test": "^1.61.1",
+		"@tsconfig/strictest": "^2.0.5",
+		"@types/node": "^22.10.0",
+		"typescript": "~5.7.0",
+		"tsx": "^4.20.0",
+		"vitest": "^3.2.0"
+	}
+}

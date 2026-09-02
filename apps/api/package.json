@@ -1,0 +1,36 @@
+{
+	"name": "flowforge-api",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "tsx watch --env-file=../../.env src/index.ts",
+		"start": "tsx src/index.ts",
+		"typecheck": "tsc --noEmit -p tsconfig.json",
+		"lint": "biome check src",
+		"test": "vitest run --passWithNoTests"
+	},
+	"dependencies": {
+		"@flowforge/bus": "workspace:*",
+		"@flowforge/config": "workspace:*",
+		"@flowforge/db": "workspace:*",
+		"@flowforge/executor": "workspace:*",
+		"@flowforge/integrations": "workspace:*",
+		"@flowforge/queue": "workspace:*",
+		"@flowforge/shared": "workspace:*",
+		"body-parser": "^2.2.0",
+		"cors": "^2.8.5",
+		"drizzle-orm": "^0.45.2",
+		"express": "^4.21.2",
+		"ws": "^8.18.0",
+		"zod": "^3.24.2"
+	},
+	"devDependencies": {
+		"@types/cors": "^2.8.17",
+		"@types/express": "^4.17.21",
+		"@types/node": "^22.10.0",
+		"@types/ws": "^8.5.13",
+		"tsx": "^4.20.0",
+		"typescript": "~5.7.0"
+	}
+}

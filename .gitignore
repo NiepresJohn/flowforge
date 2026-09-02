@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.migrations/
+coverage/
+*.local
+.env
+.DS_Store
+playwright-report/
+test-results/
+.eslintcache
+.commandcode/

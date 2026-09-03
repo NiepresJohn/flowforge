@@ -43,11 +43,11 @@ async function loadCronJobs(): Promise<void> {
 		if (!triggerNode) continue;
 
 		const config = triggerNode.config as Record<string, unknown> | null;
-		const expression = config?.expression as string | undefined;
+		const expression = config?.["expression"] as string | undefined;
 		if (!expression) continue;
 
 		try {
-			const tz = config?.timezone as string | undefined;
+			const tz = config?.["timezone"] as string | undefined;
 			const cron = new Cron(expression, {
 				...(tz ? { timezone: tz } : {}),
 				protect: true,

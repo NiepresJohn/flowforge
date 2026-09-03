@@ -18,7 +18,7 @@ export function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
 		if (req.path.startsWith(prefix)) return next();
 	}
 
-	const provided = req.header("x-api-key") ?? req.query.apiKey;
+	const provided = req.header("x-api-key") ?? req.query["apiKey"];
 	if (provided !== config.apiKey) {
 		res.status(401).json({ error: "invalid or missing API key" });
 		return;

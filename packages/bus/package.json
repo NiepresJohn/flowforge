@@ -21,6 +21,6 @@
 	"dependencies": {
 		"@flowforge/config": "workspace:*",
 		"@flowforge/shared": "workspace:*",
-		"ioredis": "^5.5.11"
+		"ioredis": "^6.0.0"
 	}
 }

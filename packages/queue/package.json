@@ -21,6 +21,6 @@
 	"dependencies": {
 		"@flowforge/config": "workspace:*",
 		"bullmq": "^5.66.5",
-		"ioredis": "^5.5.11"
+		"ioredis": "^6.0.0"
 	}
 }

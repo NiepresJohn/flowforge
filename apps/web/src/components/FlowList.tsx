@@ -1,17 +1,26 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useCreateFlow, useFlows } from "../lib/api.js";
+import {
+	useCreateFlow,
+	useFlows,
+	useToggleFlowActive,
+} from "../lib/api.js";
 
 export default function FlowList() {
 	const navigate = useNavigate();
 	const { data: flows = [], isLoading, isError } = useFlows();
 	const createFlow = useCreateFlow();
+	const toggleActive = useToggleFlowActive();
 	const [name, setName] = useState("");
+	const [triggerType, setTriggerType] = useState<"webhook" | "cron">(
+		"webhook",
+	);
 
 	const create = async () => {
 		const flow = await createFlow.mutateAsync({
 			name: name || "Untitled flow",
 			description: "",
+			triggerType,
 		});
 		setName("");
 		navigate({ to: `/flows/${flow.id}` });
@@ -23,7 +32,7 @@ export default function FlowList() {
 				<div>
 					<h1 className="text-2xl font-bold">My flows</h1>
 					<p className="text-sm text-slate-500">
-						{flows.length} active workflow{flows.length === 1 ? "" : "s"}
+						{flows.length} workflow{flows.length === 1 ? "" : "s"}
 					</p>
 				</div>
 				<div className="flex items-end gap-2">
@@ -33,6 +42,16 @@ export default function FlowList() {
 						value={name}
 						onChange={(e) => setName(e.target.value)}
 					/>
+					<select
+						className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+						value={triggerType}
+						onChange={(e) =>
+							setTriggerType(e.target.value as "webhook" | "cron")
+						}
+					>
+						<option value="webhook">Webhook</option>
+						<option value="cron">Schedule (cron)</option>
+					</select>
 					<button
 						type="button"
 						className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
@@ -62,17 +81,36 @@ export default function FlowList() {
 								>
 									{f.name}
 								</Link>
-								{f.description && (
-									<p className="text-sm text-slate-500">{f.description}</p>
-								)}
+								<div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+									<span className="rounded bg-slate-100 px-1.5 py-0.5">
+										{f.triggerType === "cron" ? "⏰ cron" : "🔗 webhook"}
+									</span>
+									{f.webhookPath && (
+										<span className="font-mono">/webhook/{f.webhookPath}</span>
+									)}
+								</div>
 							</div>
-							<div className="flex items-center gap-3 text-xs text-slate-500">
-								{f.webhookPath && (
-									<span className="font-mono">wh: {f.webhookPath}</span>
-								)}
-								<span
-									className={f.active ? "text-green-600" : "text-slate-400"}
+							<div className="flex items-center gap-3">
+								<button
+									type="button"
+									className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+										f.active ? "bg-green-500" : "bg-slate-300"
+									}`}
+									onClick={() =>
+										toggleActive.mutate({
+											flowId: f.id,
+											active: !f.active,
+										})
+									}
+									disabled={toggleActive.isPending}
 								>
+									<span
+										className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+											f.active ? "translate-x-4" : "translate-x-0"
+										}`}
+									/>
+								</button>
+								<span className="text-xs text-slate-500">
 									{f.active ? "Active" : "Inactive"}
 								</span>
 							</div>

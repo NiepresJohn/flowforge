@@ -2,6 +2,11 @@ import type { ExecutionEvent } from "@flowforge/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const base = "/api";
+const API_KEY = import.meta.env.VITE_API_KEY as string | undefined;
+
+function authHeaders(): Record<string, string> {
+	return API_KEY ? { "x-api-key": API_KEY } : {};
+}
 
 export interface ApiNode {
 	id: string;
@@ -25,6 +30,7 @@ export interface ApiFlow {
 	name: string;
 	description: string;
 	active: boolean;
+	triggerType: "webhook" | "cron";
 	triggerNodeId: string | null;
 	createdAt: string;
 	updatedAt: string;
@@ -66,6 +72,19 @@ export interface JobRef {
 	jobId: string;
 }
 
+export interface ApiCredential {
+	id: string;
+	name: string;
+	integrationId: string;
+	createdAt: string;
+}
+
+export interface CreateCredentialInput {
+	name: string;
+	integrationId: string;
+	data: Record<string, string>;
+}
+
 export async function fetchJson<T>(
 	path: string,
 	init?: RequestInit,
@@ -74,6 +93,7 @@ export async function fetchJson<T>(
 		...init,
 		headers: {
 			"Content-Type": "application/json",
+			...authHeaders(),
 			...((init?.headers ?? {}) as Record<string, string>),
 		},
 	});
@@ -87,7 +107,11 @@ export async function fetchJson<T>(
 export const api = {
 	listFlows: () => fetchJson<ApiFlow[]>("/flows"),
 	getFlow: (id: string) => fetchJson<ApiFlow>(`/flows/${id}`),
-	createFlow: (data: { name: string; description?: string }) =>
+	createFlow: (data: {
+		name: string;
+		description?: string;
+		triggerType?: "webhook" | "cron";
+	}) =>
 		fetchJson<ApiFlow>("/flows", {
 			method: "POST",
 			body: JSON.stringify(data),
@@ -148,6 +172,16 @@ export const api = {
 			method: "POST",
 			body: JSON.stringify(triggerData ?? {}),
 		}),
+
+	// Credentials
+	listCredentials: () => fetchJson<ApiCredential[]>("/credentials"),
+	createCredential: (data: CreateCredentialInput) =>
+		fetchJson<ApiCredential>("/credentials", {
+			method: "POST",
+			body: JSON.stringify(data),
+		}),
+	deleteCredential: (id: string) =>
+		fetchJson<void>(`/credentials/${id}`, { method: "DELETE" }),
 };
 
 // --- React Query hooks -----------------------------------------------------
@@ -174,8 +208,11 @@ export function useIntegrations() {
 export function useCreateFlow() {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: (data: { name: string; description?: string }) =>
-			api.createFlow(data),
+		mutationFn: (data: {
+			name: string;
+			description?: string;
+			triggerType?: "webhook" | "cron";
+		}) => api.createFlow(data),
 		onSuccess: (flow) => {
 			qc.setQueryData(["flows"], (prev: ApiFlow[] | undefined) =>
 				prev ? [...prev, flow] : [flow],
@@ -257,6 +294,43 @@ export function useRunFlow() {
 			flowId: string;
 			triggerData?: Record<string, unknown>;
 		}) => api.runFlow(flowId, triggerData),
+	});
+}
+
+export function useCredentials() {
+	return useQuery({
+		queryKey: ["credentials"],
+		queryFn: () => api.listCredentials(),
+	});
+}
+
+export function useCreateCredential() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (data: CreateCredentialInput) => api.createCredential(data),
+		onSuccess: () => qc.invalidateQueries({ queryKey: ["credentials"] }),
+	});
+}
+
+export function useDeleteCredential() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (id: string) => api.deleteCredential(id),
+		onSuccess: () => qc.invalidateQueries({ queryKey: ["credentials"] }),
+	});
+}
+
+export function useToggleFlowActive() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ flowId, active }: { flowId: string; active: boolean }) =>
+			api.updateFlow(flowId, { active }),
+		onSuccess: (_data, vars) => {
+			qc.setQueryData(["flow", vars.flowId], (prev: ApiFlow | undefined) =>
+				prev ? { ...prev, active: vars.active } : prev,
+			);
+			qc.invalidateQueries({ queryKey: ["flows"] });
+		},
 	});
 }
 

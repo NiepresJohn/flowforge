@@ -1,4 +1,4 @@
-import { getDb, webhookEndpoints } from "@flowforge/db";
+import { flows, getDb, webhookEndpoints } from "@flowforge/db";
 import { verifyHmac } from "@flowforge/executor";
 import { eq } from "drizzle-orm";
 import { Router } from "express";
@@ -24,6 +24,16 @@ router.post("/:path", async (req, res, next) => {
 		const endpoint = rows[0];
 		if (!endpoint) {
 			res.status(404).json({ error: "unknown webhook path" });
+			return;
+		}
+
+		// Check that the flow is active.
+		const [flow] = await db
+			.select({ active: flows.active })
+			.from(flows)
+			.where(eq(flows.id, endpoint.flowId));
+		if (!flow?.active) {
+			res.status(403).json({ error: "flow is not active" });
 			return;
 		}
 

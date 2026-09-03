@@ -75,8 +75,17 @@ export async function runFlow(
 
 	const context: Record<string, unknown> = {};
 
+	// Track which nodes are skipped due to conditional branching.
+	const skippedNodes = new Set<string>();
+
 	try {
 		for (const node of ordered) {
+			// Skip nodes that are children of a failed condition branch.
+			if (skippedNodes.has(node.id)) {
+				await skipNode(db, bus, node, execution.id, jobId, flow.id);
+				continue;
+			}
+
 			const result = await runNode(
 				db,
 				bus,
@@ -86,6 +95,24 @@ export async function runFlow(
 				flow.id,
 				{ input: { ...context, ...opts.triggerData } },
 			);
+
+			// If this is a condition node that returned false, mark all
+			// downstream nodes (that aren't also reachable via another path)
+			// as skipped.
+			if (
+				node.integrationId === "flowforge.core" &&
+				node.operationKey === "condition" &&
+				(result.output as Record<string, unknown> | undefined)?.["matched"] ===
+					false
+			) {
+				const descendants = getDescendants(node.id, edges);
+				for (const id of descendants) {
+					if (!hasAlternatePath(id, node.id, edges, ordered)) {
+						skippedNodes.add(id);
+					}
+				}
+			}
+
 			// Merge node output into shared context so downstream nodes can
 			// reference prior outputs by operationKey.
 			Object.assign(context, result.output ?? {});
@@ -337,4 +364,80 @@ async function assertReachable(
 			);
 		}
 	}
+}
+
+// --- Conditional branching helpers ----------------------------------------
+
+/** Mark a node as skipped in the execution steps. */
+async function skipNode(
+	db: Db,
+	bus: ExecutionBus,
+	node: FlowNode,
+	executionId: string,
+	jobId: string | undefined,
+	flowId: string,
+): Promise<void> {
+	await db.insert(executionSteps).values({
+		executionId,
+		nodeId: node.id,
+		operationKey: node.operationKey,
+		status: "skipped",
+		config: node.config,
+		input: {},
+	});
+	await bus.publish({
+		executionId,
+		jobId,
+		flowId,
+		type: "step.completed",
+		payload: {
+			stepId: "",
+			nodeId: node.id,
+			operationKey: node.operationKey,
+			status: "skipped",
+		},
+	});
+}
+
+/** Get all descendant node ids reachable from `startId` via edges. */
+function getDescendants(startId: string, edges: FlowEdge[]): Set<string> {
+	const adj = new Map<string, string[]>();
+	for (const edge of edges) {
+		const list = adj.get(edge.sourceNodeId) ?? [];
+		list.push(edge.targetNodeId);
+		adj.set(edge.sourceNodeId, list);
+	}
+
+	const seen = new Set<string>();
+	const stack = [startId];
+	while (stack.length > 0) {
+		const id = stack.pop()!;
+		for (const next of adj.get(id) ?? []) {
+			if (!seen.has(next)) {
+				seen.add(next);
+				stack.push(next);
+			}
+		}
+	}
+	return seen;
+}
+
+/**
+ * Check if `nodeId` has an incoming edge from a node other than `excludeSource`.
+ * Used to determine if a node should still be executed even if one parent
+ * branch is skipped.
+ */
+function hasAlternatePath(
+	nodeId: string,
+	excludeSource: string,
+	edges: FlowEdge[],
+	ordered: FlowNode[],
+): boolean {
+	const orderedIds = new Set(ordered.map((n) => n.id));
+	for (const edge of edges) {
+		if (edge.targetNodeId === nodeId && edge.sourceNodeId !== excludeSource) {
+			if (orderedIds.has(edge.sourceNodeId)) return true;
+		}
+	}
+	return false;
 }

@@ -16,6 +16,7 @@ const router = Router();
 const createFlowSchema = z.object({
 	name: z.string().min(1),
 	description: z.string().optional(),
+	triggerType: z.enum(["webhook", "cron"]).default("webhook"),
 });
 
 const updateFlowSchema = z.object({
@@ -35,16 +36,21 @@ router.get("/", async (_req, res, next) => {
 
 router.post("/", async (req, res, next) => {
 	try {
-		const { name, description } = createFlowSchema.parse(req.body);
+		const { name, description, triggerType } = createFlowSchema.parse(req.body);
+
+		// Find the appropriate trigger integration.
 		const triggerOp = listManifests()
 			.flatMap((m) => m.triggers)
-			.find((t) => t.integrationId === "flowforge.webhook");
+			.find((t) => {
+				if (triggerType === "cron") return t.integrationId === "flowforge.cron";
+				return t.integrationId === "flowforge.webhook";
+			});
 		if (!triggerOp)
-			throw new Error("webhook trigger integration not registered");
+			throw new Error(`${triggerType} trigger integration not registered`);
 
 		const [flow] = await db
 			.insert(flows)
-			.values({ name, description: description ?? "" })
+			.values({ name, description: description ?? "", triggerType })
 			.returning();
 		if (!flow) throw new Error("failed to create flow");
 
@@ -70,12 +76,15 @@ router.post("/", async (req, res, next) => {
 				.set({ triggerNodeId: triggerNode[0].id })
 				.where(eq(flows.id, flow.id));
 
-			const { randomUUID, randomBytes } = await import("node:crypto");
-			await tx.insert(webhookEndpoints).values({
-				flowId: flow.id,
-				path: randomUUID().slice(0, 12),
-				secret: randomBytes(32).toString("hex"),
-			});
+			// Only webhook triggers get a webhook endpoint.
+			if (triggerType === "webhook") {
+				const { randomUUID, randomBytes } = await import("node:crypto");
+				await tx.insert(webhookEndpoints).values({
+					flowId: flow.id,
+					path: randomUUID().slice(0, 12),
+					secret: randomBytes(32).toString("hex"),
+				});
+			}
 		});
 
 		res.status(201).json(flow);
@@ -115,6 +124,7 @@ router.get("/:id", async (req, res, next) => {
 			name: f.name,
 			description: f.description,
 			active: f.active,
+			triggerType: f.triggerType,
 			triggerNodeId: triggerNode?.id ?? f.triggerNodeId,
 			createdAt: f.createdAt,
 			updatedAt: f.updatedAt,

@@ -26,6 +26,7 @@ import {
 	useRunFlow,
 	useUpdateNode,
 } from "../lib/api.js";
+import CredentialsModal from "./CredentialsModal.js";
 import ExecutionMonitor from "./ExecutionMonitor.js";
 
 interface NodeData {
@@ -69,6 +70,7 @@ export default function FlowBuilder() {
 	const [edges, setEdges, onEdgesChange] = useEdgesState<unknown>([]);
 	const [selected, setSelected] = useState<Node<NodeData> | null>(null);
 	const [monitorOpen, setMonitorOpen] = useState(false);
+	const [credentialsOpen, setCredentialsOpen] = useState(false);
 	const [jobId, setJobId] = useState("");
 
 	const addNodeMut = useAddNode();
@@ -162,6 +164,31 @@ export default function FlowBuilder() {
 						<p className="mb-3 text-xs text-slate-400">
 							{selected.data.integrationId} · {selected.data.operationKey}
 						</p>
+						{flow?.webhookPath &&
+							selected.data.nodeType === "trigger" &&
+							flow.triggerType === "webhook" && (
+								<div className="mb-3 rounded bg-slate-50 p-2">
+									<div className="mb-1 text-xs font-medium text-slate-500">
+										Webhook URL
+									</div>
+									<div className="flex items-center gap-1">
+										<code className="flex-1 truncate text-xs text-slate-700">
+											{window.location.origin}/webhook/{flow.webhookPath}
+										</code>
+										<button
+											type="button"
+											className="text-xs text-[var(--color-accent)]"
+											onClick={() =>
+												navigator.clipboard.writeText(
+													`${window.location.origin}/webhook/${flow.webhookPath}`,
+												)
+											}
+										>
+											Copy
+										</button>
+									</div>
+								</div>
+							)}
 						{renderConfigFields(selectedNodeDef, selected.data, (cfg) => {
 							const nextConfig = { ...selected.data.config, ...cfg };
 							setNodes((prev) =>
@@ -231,8 +258,20 @@ export default function FlowBuilder() {
 				{runMut.isPending ? "Running…" : "Run flow"}
 			</button>
 
+			<button
+				type="button"
+				className="fixed bottom-6 left-6 rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-lg"
+				onClick={() => setCredentialsOpen(true)}
+			>
+				Credentials
+			</button>
+
 			{monitorOpen && (
 				<ExecutionMonitor jobId={jobId} onClose={() => setMonitorOpen(false)} />
+			)}
+
+			{credentialsOpen && (
+				<CredentialsModal onClose={() => setCredentialsOpen(false)} />
 			)}
 		</div>
 	);

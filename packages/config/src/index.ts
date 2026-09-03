@@ -26,4 +26,5 @@ export const config = {
 	baseUrl: env("BASE_URL", "http://localhost:4000"),
 	queueName: env("QUEUE_NAME", "flow-executions"),
 	executionConcurrency: asNumber(process.env["EXECUTOR_CONCURRENCY"], 5),
+	apiKey: env("API_KEY", ""),
 } as const;

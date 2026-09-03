@@ -18,6 +18,9 @@ export const flows = pgTable("flows", {
 	name: text("name").notNull(),
 	description: text("description").notNull().default(""),
 	active: boolean("active").notNull().default(false),
+	triggerType: text("trigger_type", { enum: ["webhook", "cron"] })
+		.notNull()
+		.default("webhook"),
 	/**
 	 * The entry-point node. Nullable during creation (the trigger node is
 	 * created in the same transaction right after the flow row), set to that

@@ -5,8 +5,11 @@ import type { ExecutionEvent } from "@flowforge/shared";
 import cors from "cors";
 import express from "express";
 import { WebSocket, WebSocketServer } from "ws";
+import { apiKeyAuth } from "./middleware/auth.js";
+import credentialsRouter from "./routes/credentials.js";
 import executionsRouter from "./routes/executions.js";
 import flowsRouter from "./routes/flows.js";
+import healthRouter from "./routes/health.js";
 import integrationsRouter from "./routes/integrations.js";
 import nodesRouter from "./routes/nodes.js";
 import webhooksRouter from "./routes/webhooks.js";
@@ -18,14 +21,15 @@ app.use(cors({ origin: "*" }));
 // before the global JSON parser consumes the stream.
 app.use("/webhook", express.raw({ type: "*/*" }));
 app.use(express.json());
+app.use(apiKeyAuth);
 
+app.use("/healthz", healthRouter);
+app.use("/api/credentials", credentialsRouter);
 app.use("/api/flows", flowsRouter);
 app.use("/api/flows", nodesRouter);
 app.use("/api/flows", executionsRouter);
 app.use("/api/integrations", integrationsRouter);
 app.use("/webhook", webhooksRouter);
-
-app.get("/healthz", (_req, res) => res.json({ status: "ok" }));
 
 const httpServer = createServer(app);
 
@@ -77,5 +81,28 @@ function broadcast(event: ExecutionEvent) {
 // Redis subscriber: the worker publishes here, we forward to WS clients.
 // Kept referenced so the connection isn't GC'd for the process lifetime.
 const redisSub = createSubscriber(config.redisUrl, broadcast);
+
+let shuttingDown = false;
+
+export function shutdown(): void {
+	if (shuttingDown) return;
+	shuttingDown = true;
+
+	// Stop accepting new connections.
+	httpServer.close(() => {
+		console.log("[api] http server closed");
+	});
+
+	// Close all WebSocket connections.
+	for (const client of wss.clients) {
+		client.close(1001, "server shutting down");
+	}
+
+	// Give in-flight requests a moment, then exit.
+	setTimeout(() => {
+		console.log("[api] shutdown complete");
+		process.exit(0);
+	}, 5000);
+}
 
 export { app, httpServer, redisSub, wss };

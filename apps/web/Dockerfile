@@ -8,6 +8,11 @@ FROM base AS builder
 WORKDIR /app
 COPY . .
 RUN pnpm install --frozen-lockfile
+
+# Pass API key at build time (optional)
+ARG VITE_API_KEY=
+ENV VITE_API_KEY=$VITE_API_KEY
+
 WORKDIR /app/apps/web
 RUN pnpm build
 

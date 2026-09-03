@@ -1,6 +1,8 @@
 import type { Integration, IntegrationManifest } from "@flowforge/shared";
+import { condition } from "./actions/condition.js";
 import { delay } from "./actions/delay.js";
 import { httpRequest } from "./actions/http-request.js";
+import { cronTrigger } from "./triggers/cron.js";
 import { webhookTrigger } from "./triggers/webhook.js";
 
 /**
@@ -31,5 +33,7 @@ export function listManifests(): IntegrationManifest[] {
 
 // Built-ins
 register(webhookTrigger);
+register(cronTrigger);
 register(httpRequest);
 register(delay);
+register(condition);

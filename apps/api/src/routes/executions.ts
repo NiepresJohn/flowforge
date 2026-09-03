@@ -1,21 +1,46 @@
 import { executionSteps, executions, getDb } from "@flowforge/db";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql, and } from "drizzle-orm";
 import { Router } from "express";
+import { z } from "zod";
 import { enqueueExecution } from "../queue.js";
 
 const db = getDb();
 const router = Router({ mergeParams: true });
 
-/** List executions for a flow (or all). */
+const listQuerySchema = z.object({
+	status: z.enum(["running", "success", "failed", "cancelled"]).optional(),
+	limit: z.coerce.number().min(1).max(100).default(20),
+	offset: z.coerce.number().min(0).default(0),
+});
+
+/** List executions for a flow with pagination and optional status filter. */
 router.get("/:flowId/executions", async (req, res, next) => {
 	try {
-		const rows = await db
-			.select()
-			.from(executions)
-			.where(eq(executions.flowId, req.params.flowId))
-			.orderBy(desc(executions.createdAt))
-			.limit(50);
-		res.json(rows);
+		const { status, limit, offset } = listQuerySchema.parse(req.query);
+
+		const conditions = [eq(executions.flowId, req.params.flowId)];
+		if (status) conditions.push(eq(executions.status, status));
+
+		const [items, total] = await Promise.all([
+			db
+				.select()
+				.from(executions)
+				.where(and(...conditions))
+				.orderBy(desc(executions.createdAt))
+				.limit(limit)
+				.offset(offset),
+			db
+				.select({ count: sql<number>`count(*)::int` })
+				.from(executions)
+				.where(and(...conditions)),
+		]);
+
+		res.json({
+			items,
+			total: total[0]?.count ?? 0,
+			limit,
+			offset,
+		});
 	} catch (e) {
 		next(e);
 	}

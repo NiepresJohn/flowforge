@@ -13,6 +13,7 @@ vi.mock("../lib/api.js", () => ({
 			name: "New flow",
 			description: "",
 			active: false,
+			triggerType: "webhook",
 			triggerNodeId: null,
 			createdAt: "",
 			updatedAt: "",
@@ -20,6 +21,10 @@ vi.mock("../lib/api.js", () => ({
 			nodes: [],
 			edges: [],
 		}),
+	}),
+	useToggleFlowActive: () => ({
+		isPending: false,
+		mutate: vi.fn(),
 	}),
 }));
 
@@ -37,6 +42,7 @@ const flow: ApiFlow = {
 	name: "My first flow",
 	description: "A test flow",
 	active: true,
+	triggerType: "webhook",
 	triggerNodeId: "trigger-1",
 	createdAt: "2026-01-01T00:00:00Z",
 	updatedAt: "2026-01-01T00:00:00Z",
@@ -69,9 +75,9 @@ describe("FlowList", () => {
 		});
 		render(<FlowList />);
 		expect(screen.getByText("My first flow")).toBeInTheDocument();
-		expect(screen.getByText(/1 active workflow/)).toBeInTheDocument();
+		expect(screen.getByText(/1 workflow/)).toBeInTheDocument();
 		expect(screen.getByText("Active")).toBeInTheDocument();
-		expect(screen.getByText("wh: abc123")).toBeInTheDocument();
+		expect(screen.getByText("/webhook/abc123")).toBeInTheDocument();
 	});
 
 	it("shows an error message when the query fails", () => {

@@ -2,7 +2,7 @@ import type { ExecutionEvent } from "@flowforge/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const base = "/api";
-const API_KEY = import.meta.env.VITE_API_KEY as string | undefined;
+const API_KEY = import.meta.env["VITE_API_KEY"] as string | undefined;
 
 function authHeaders(): Record<string, string> {
 	return API_KEY ? { "x-api-key": API_KEY } : {};

@@ -1,6 +1,6 @@
 import { flows, getDb } from "@flowforge/db";
 import { Cron } from "croner";
-import { eq, and } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { enqueueExecution } from "./queue.js";
 
 const db = getDb();
@@ -30,8 +30,7 @@ async function loadCronJobs(): Promise<void> {
 		.where(and(eq(flows.triggerType, "cron"), eq(flows.active, true)));
 
 	for (const flow of cronFlows) {
-		const node = flow.triggerNodeId;
-		if (!node) continue;
+		if (!flow.triggerNodeId) continue;
 
 		// We need to get the cron expression from the trigger node config.
 		// The trigger node is loaded separately.
@@ -41,20 +40,25 @@ async function loadCronJobs(): Promise<void> {
 			.from(flowNodes)
 			.where(eq(flowNodes.id, flow.triggerNodeId));
 
-		const expression = triggerNode?.config?.expression as string | undefined;
+		if (!triggerNode) continue;
+
+		const config = triggerNode.config as Record<string, unknown> | null;
+		const expression = config?.["expression"] as string | undefined;
 		if (!expression) continue;
 
 		try {
+			const tz = config?.["timezone"] as string | undefined;
 			const cron = new Cron(expression, {
-				timezone: (triggerNode?.config?.timezone as string) ?? undefined,
+				...(tz ? { timezone: tz } : {}),
 				protect: true,
 			});
-			jobs.push({
+			const job: CronJob = {
 				flowId: flow.id,
 				expression,
-				timezone: triggerNode?.config?.timezone as string,
 				cron,
-			});
+			};
+			if (tz) job.timezone = tz;
+			jobs.push(job);
 		} catch (e) {
 			console.error(`[scheduler] invalid cron for flow ${flow.id}:`, e);
 		}
@@ -78,10 +82,7 @@ function tick(): void {
 					triggeredAt: new Date().toISOString(),
 					source: "cron",
 				}).catch((e) => {
-					console.error(
-						`[scheduler] failed to enqueue flow ${job.flowId}:`,
-						e,
-					);
+					console.error(`[scheduler] failed to enqueue flow ${job.flowId}:`, e);
 				});
 			}
 		} catch (e) {

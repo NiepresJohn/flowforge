@@ -6,6 +6,9 @@ import cors from "cors";
 import express from "express";
 import { WebSocket, WebSocketServer } from "ws";
 import { apiKeyAuth } from "./middleware/auth.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { requestId } from "./middleware/requestId.js";
+import { securityMiddleware } from "./middleware/security.js";
 import credentialsRouter from "./routes/credentials.js";
 import executionsRouter from "./routes/executions.js";
 import flowsRouter from "./routes/flows.js";
@@ -16,11 +19,13 @@ import webhooksRouter from "./routes/webhooks.js";
 
 const app = express();
 
+app.use(requestId);
+app.use(securityMiddleware);
 app.use(cors({ origin: "*" }));
 // Webhooks need the raw body for HMAC verification, so parse them as raw text
 // before the global JSON parser consumes the stream.
-app.use("/webhook", express.raw({ type: "*/*" }));
-app.use(express.json());
+app.use("/webhook", express.raw({ type: "*/*", limit: "1mb" }));
+app.use(express.json({ limit: "1mb" }));
 app.use(apiKeyAuth);
 
 app.use("/healthz", healthRouter);
@@ -31,6 +36,9 @@ app.use("/api/flows", executionsRouter);
 app.use("/api/integrations", integrationsRouter);
 app.use("/webhook", webhooksRouter);
 
+// Global error handler — must be last
+app.use(errorHandler);
+
 const httpServer = createServer(app);
 
 /**
@@ -40,40 +48,34 @@ const httpServer = createServer(app);
  */
 const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
 
-interface Subscription {
-	socket: WebSocket;
-	executionId: string;
-}
-
-const subscriptions: Subscription[] = [];
+/** Track subscriptions per socket for O(1) cleanup on disconnect */
+const subscriptions = new Map<WebSocket, Set<string>>();
 
 wss.on("connection", (socket) => {
+	subscriptions.set(socket, new Set());
 	socket.on("message", (raw) => {
 		try {
 			const msg = JSON.parse(raw.toString());
 			if (msg.type === "subscribe" && typeof msg.executionId === "string") {
-				subscriptions.push({ socket, executionId: msg.executionId });
+				subscriptions.get(socket)?.add(msg.executionId);
 			}
 		} catch {
 			socket.close(4400, "invalid message");
 		}
 	});
 	socket.on("close", () => {
-		for (let i = subscriptions.length - 1; i >= 0; i--) {
-			const sub = subscriptions[i];
-			if (sub && sub.socket === socket) subscriptions.splice(i, 1);
-		}
+		subscriptions.delete(socket);
 	});
 });
 
 /** Fan a parsed bus event to all sockets subscribed to that executionId or jobId. */
 function broadcast(event: ExecutionEvent) {
-	for (const sub of subscriptions) {
+	for (const [socket, executionIds] of subscriptions) {
 		const matched =
-			sub.executionId === event.executionId ||
-			(event.jobId !== undefined && sub.executionId === event.jobId);
-		if (matched && sub.socket.readyState === WebSocket.OPEN) {
-			sub.socket.send(JSON.stringify(event));
+			executionIds.has(event.executionId) ||
+			(event.jobId !== undefined && executionIds.has(event.jobId));
+		if (matched && socket.readyState === WebSocket.OPEN) {
+			socket.send(JSON.stringify(event));
 		}
 	}
 }

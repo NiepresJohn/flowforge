@@ -15,7 +15,7 @@
 		"@flowforge/db": "workspace:*",
 		"@flowforge/executor": "workspace:*",
 		"@flowforge/queue": "workspace:*",
-		"bullmq": "^5.66.5"
+		"bullmq": "^6.3.2"
 	},
 	"devDependencies": {
 		"@types/node": "^22.10.0",

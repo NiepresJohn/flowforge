@@ -20,7 +20,7 @@
 		"@flowforge/shared": "workspace:*",
 		"body-parser": "^2.2.0",
 		"cors": "^2.8.5",
-		"croner": "^9.0.0",
+		"croner": "^10.0.1",
 		"drizzle-orm": "^0.45.2",
 		"express": "^4.21.2",
 		"helmet": "^8.0.0",

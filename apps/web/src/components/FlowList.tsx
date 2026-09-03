@@ -1,10 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-	useCreateFlow,
-	useFlows,
-	useToggleFlowActive,
-} from "../lib/api.js";
+import { useCreateFlow, useFlows, useToggleFlowActive } from "../lib/api.js";
 
 export default function FlowList() {
 	const navigate = useNavigate();
@@ -12,9 +8,7 @@ export default function FlowList() {
 	const createFlow = useCreateFlow();
 	const toggleActive = useToggleFlowActive();
 	const [name, setName] = useState("");
-	const [triggerType, setTriggerType] = useState<"webhook" | "cron">(
-		"webhook",
-	);
+	const [triggerType, setTriggerType] = useState<"webhook" | "cron">("webhook");
 
 	const create = async () => {
 		const flow = await createFlow.mutateAsync({

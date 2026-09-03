@@ -38,7 +38,12 @@ router.post("/", async (req, res, next) => {
 
 		const [row] = await db
 			.insert(credentials)
-			.values({ name, integrationId, data: encrypted.data, nonce: encrypted.nonce })
+			.values({
+				name,
+				integrationId,
+				data: encrypted.data,
+				nonce: encrypted.nonce,
+			})
 			.returning({
 				id: credentials.id,
 				name: credentials.name,

@@ -94,8 +94,7 @@ function evaluate(
 			if (actual == null) return true;
 			if (typeof actual === "string") return actual.length === 0;
 			if (Array.isArray(actual)) return actual.length === 0;
-			if (typeof actual === "object")
-				return Object.keys(actual).length === 0;
+			if (typeof actual === "object") return Object.keys(actual).length === 0;
 			return false;
 		default:
 			return false;

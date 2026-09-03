@@ -15,9 +15,9 @@ router.get("/deep", async (_req, res) => {
 	try {
 		const db = getDb();
 		await db.execute(sql`SELECT 1`);
-		checks["database"] = "ok";
+		checks.database = "ok";
 	} catch {
-		checks["database"] = "fail";
+		checks.database = "fail";
 	}
 
 	// Redis check
@@ -25,9 +25,9 @@ router.get("/deep", async (_req, res) => {
 		const redis = new Redis(config.redisUrl, { maxRetriesPerRequest: 1 });
 		await redis.ping();
 		await redis.quit();
-		checks["redis"] = "ok";
+		checks.redis = "ok";
 	} catch {
-		checks["redis"] = "fail";
+		checks.redis = "fail";
 	}
 
 	const allOk = Object.values(checks).every((v) => v === "ok");

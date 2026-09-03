@@ -1,8 +1,8 @@
 import { config } from "@flowforge/config";
 import { getDb, migrateDb } from "@flowforge/db";
 import { sql } from "drizzle-orm";
-import { httpServer, shutdown } from "./server.js";
 import { startScheduler, stopScheduler } from "./scheduler.js";
+import { httpServer, shutdown } from "./server.js";
 
 async function main() {
 	// Verify DB connectivity at startup.

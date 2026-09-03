@@ -30,8 +30,8 @@ importers:
         specifier: ^4.20.0
         version: 4.23.13
       typescript:
-        specifier: ~5.7.0
-        version: 5.7.3
+        specifier: ~5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^3.2.0
         version: 3.2.7(@types/node@22.20.1)(happy-dom@20.12.0)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.13)(yaml@2.9.0)
@@ -103,8 +103,8 @@ importers:
         specifier: ^4.20.0
         version: 4.23.13
       typescript:
-        specifier: ~5.7.0
-        version: 5.7.3
+        specifier: ~5.9.3
+        version: 5.9.3
 
   apps/web:
     dependencies:
@@ -167,8 +167,8 @@ importers:
         specifier: ^4.3.3
         version: 4.3.3
       typescript:
-        specifier: ~5.7.0
-        version: 5.7.3
+        specifier: ~5.9.3
+        version: 5.9.3
       vite:
         specifier: ^6.0.0
         version: 6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.13)(yaml@2.9.0)
@@ -204,8 +204,8 @@ importers:
         specifier: ^4.20.0
         version: 4.23.13
       typescript:
-        specifier: ~5.7.0
-        version: 5.7.3
+        specifier: ~5.9.3
+        version: 5.9.3
 
   packages/bus:
     dependencies:
@@ -244,8 +244,8 @@ importers:
         specifier: ^4.20.0
         version: 4.23.13
       typescript:
-        specifier: ~5.7.0
-        version: 5.7.3
+        specifier: ~5.9.3
+        version: 5.9.3
 
   packages/executor:
     dependencies:
@@ -2706,8 +2706,8 @@ packages:
     resolution: {integrity: sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA==}
     engines: {node: '>= 18'}
 
-  typescript@5.7.3:
-    resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -5051,7 +5051,7 @@ snapshots:
       media-typer: 1.1.1
       mime-types: 3.0.2
 
-  typescript@5.7.3: {}
+  typescript@5.9.3: {}
 
   undici-types@6.21.0: {}
 

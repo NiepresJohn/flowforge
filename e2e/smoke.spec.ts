@@ -41,7 +41,9 @@ test("creates a flow, runs it, and sees the execution succeed", async ({
 	// Confirm the execution landed in the API.
 	const res = await request.get(`/api/flows/${flowId}/executions`);
 	expect(res.ok()).toBeTruthy();
-	const executions = (await res.json()) as Array<{ status: string }>;
+	const { items: executions } = (await res.json()) as {
+		items: Array<{ status: string }>;
+	};
 	expect(executions.length).toBeGreaterThan(0);
 	expect(executions[0]?.status).toBe("success");
 

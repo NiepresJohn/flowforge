@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FlowForge — Self-hosted workflow automation</title>
+<meta name="description" content="Self-hosted workflow automation (mini-Zapier). Build flows on a canvas, run them on a durable queue, watch executions live.">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{--bg:#0f172a;--panel:#1b2336;--line:#334155;--fg:#e8eaf0;--mute:#9aa3b8;--acc:#22c55e;--acc2:#86efac;--code:#0a0c11}
+@media(prefers-color-scheme:light){:root{--bg:#fbfaf8;--panel:#fff;--line:#e6e2da;--fg:#16181d;--mute:#5d6577;--acc:#15803d;--acc2:#166534;--code:#f4f1ea}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 'IBM Plex Sans',system-ui,sans-serif}
+a{color:var(--acc)}code,pre{font-family:'JetBrains Mono',ui-monospace,monospace}
+.w{max-width:1040px;margin:0 auto;padding:0 20px}
+nav{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+nav b{font-size:20px;letter-spacing:-.02em}nav b span{color:var(--acc)}
+nav div a{margin-left:18px;color:var(--mute);text-decoration:none;font-size:14px}nav div a:hover{color:var(--fg)}
+.hero{padding:64px 0 48px;text-align:center}
+.hero h1{font-size:clamp(36px,6vw,64px);line-height:1.05;letter-spacing:-.03em;margin:0 0 18px}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:620px;margin:0 auto 28px;color:var(--mute);font-size:18px}
+.btn{display:inline-block;padding:11px 20px;border-radius:9px;font-weight:600;text-decoration:none;margin:4px}
+.p{background:var(--acc);color:#0f172a}@media(prefers-color-scheme:light){.p{color:#fff}}.s{border:1px solid var(--line);color:var(--fg)}
+section{padding:44px 0}
+h2{font-size:28px;letter-spacing:-.02em;margin:0 0 6px}
+.sub{color:var(--mute);margin:0 0 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+.card h3{margin:0 0 6px;font-size:17px}.card p{margin:0;color:var(--mute);font-size:15px}
+.card .i{margin-bottom:10px}
+pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:16px;overflow:auto;font-size:13px;line-height:1.55;margin:0}
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
+.n{padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:14px}
+.n.t{border-color:var(--acc);color:var(--acc)}.ar{color:var(--mute)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}th{color:var(--mute);font-weight:600}
+td:first-child{white-space:nowrap}
+.tags span{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:3px 12px;margin:3px;font-size:13px;color:var(--mute)}
+.tbl{overflow-x:auto}
+footer{border-top:1px solid var(--line);padding:28px 0;color:var(--mute);font-size:14px;text-align:center;margin-top:30px}
+
+.ic{width:24px;height:24px;color:var(--acc);display:block}
+a,.btn,.card{transition:color .18s ease,background-color .18s ease,border-color .18s ease}
+.btn,nav a{cursor:pointer}.btn:hover{filter:brightness(1.1)}.s:hover{border-color:var(--acc)}.card:hover{border-color:var(--acc)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:3px;border-radius:4px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="w">
+<nav><b>Flow<span>Forge</span></b><div><a href="#features">Features</a><a href="#arch">Architecture</a><a href="#start">Quick start</a><a href="#webhook">Webhooks</a><a href="#test">Testing</a><a href="https://github.com/NiepresJohn/flowforge">GitHub</a></div></nav>
+
+<header class="hero">
+<h1>Automate anything.<br><em>On your own servers.</em></h1>
+<p>A self-hosted, mini-Zapier workflow platform. Wire a trigger to actions on a visual canvas, run them through a durable queue, and watch every execution live.</p>
+<a class="btn p" href="#start">Get started</a><a class="btn s" href="https://github.com/NiepresJohn/flowforge">View on GitHub</a>
+</header>
+
+<section style="padding-top:0"><div class="flow">
+<div class="n t">Webhook trigger</div><span class="ar">→</span><div class="n">HTTP request</div><span class="ar">→</span><div class="n">Delay</div><span class="ar">→</span><div class="n">HTTP request <code>{{ step.output }}</code></div>
+</div></section>
+
+<section id="features"><h2>Everything it offers</h2><p class="sub">One platform: builder, trigger endpoint, queue, executor and live monitor.</p>
+<div class="grid">
+<div class="card"><div class="i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></div><h3>Visual flow builder</h3><p>Drag-free canvas on React Flow with a configurable node sidebar. Wire trigger → action chains.</p></div>
+<div class="card"><div class="i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div><h3>Webhook triggers</h3><p>Every flow gets a public <code>/webhook/:path</code> endpoint, signed with HMAC-SHA256.</p></div>
+<div class="card"><div class="i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h4"/></svg></div><h3>Built-in actions</h3><p>HTTP requests with <code>{{ variable }}</code> interpolation from prior steps, plus delay.</p></div>
+<div class="card"><div class="i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></div><h3>Durable execution</h3><p>BullMQ + Redis queue. The worker runs flows with retries, backoff and step-level input/output/error tracking.</p></div>
+<div class="card"><div class="i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></div><h3>Live monitoring</h3><p>Execution lifecycle events stream over WebSocket straight to the UI.</p></div>
+<div class="card"><div class="i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h6l2-8 4 16 2-8h2"/></svg></div><h3>Extensible integrations</h3><p>Integrations register manifests (triggers, actions, JSON config schemas) via <code>@flowforge/integrations</code>.</p></div>
+<div class="card"><div class="i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></div><h3>Encrypted credentials</h3><p>AES-256-GCM with <code>CREDENTIAL_ENCRYPTION_KEY</code>. Decryption happens only inside the worker.</p></div>
+<div class="card"><div class="i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div><h3>Safe graph execution</h3><p>Kahn's topological sort, cycle rejection, reachable nodes run in order.</p></div>
+<div class="card"><div class="i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h4"/></svg></div><h3>Docker ready</h3><p>One <code>docker compose up --build</code>: nginx on :80 proxies <code>/api</code>, <code>/ws</code>, <code>/webhook/</code>.</p></div>
+</div></section>
+
+<section id="arch"><h2>Architecture</h2><p class="sub">A pnpm monorepo: three apps, seven shared packages.</p>
+<div class="grid">
+<div class="card"><h3>apps/</h3><table><tr><td><code>api</code></td><td>Express API + WebSocket gateway <small>:4000</small></td></tr><tr><td><code>worker</code></td><td>BullMQ worker, executes flows</td></tr><tr><td><code>web</code></td><td>React SPA — Vite, React Router, React Flow</td></tr></table></div>
+<div class="card"><h3>packages/</h3><table><tr><td><code>bus</code></td><td>Redis pub/sub event bus</td></tr><tr><td><code>config</code></td><td>Shared env config</td></tr><tr><td><code>db</code></td><td>Drizzle ORM schema + Postgres</td></tr><tr><td><code>executor</code></td><td>Topo-sort, node runner, AES-GCM</td></tr><tr><td><code>integrations</code></td><td>Registry + triggers/actions</td></tr><tr><td><code>queue</code></td><td>BullMQ wrapper</td></tr><tr><td><code>shared</code></td><td>Canonical domain types</td></tr></table></div>
+</div>
+<br>
+<pre>External service ──POST──▶ /webhook/:path (api) ──▶ BullMQ ──▶ worker
+                                                              │
+   api ◀──Redis exec events── worker (executor runs flow) ────┤
+    │                                                          │
+    └──▶ WebSocket clients (browser execution monitor)         ▼
+                                                        Postgres rows</pre>
+<p class="sub" style="margin-top:14px">Flows live in Postgres as <code>flows</code>, <code>flow_nodes</code> and <code>flow_edges</code>.</p>
+<div class="tags"><span>TypeScript</span><span>Express</span><span>React</span><span>Vite</span><span>React Flow</span><span>BullMQ</span><span>Redis</span><span>Postgres</span><span>Drizzle</span><span>WebSocket</span><span>Vitest</span><span>Playwright</span><span>Biome</span><span>Docker</span></div>
+</section>
+
+<section id="start"><h2>Quick start</h2><p class="sub">Needs Node ≥ 22, pnpm ≥ 9, Docker Compose.</p>
+<pre># install + configure
+pnpm install
+cp .env.example .env
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # → CREDENTIAL_ENCRYPTION_KEY
+
+# infra + schema
+docker compose up -d postgres redis
+pnpm --filter @flowforge/db db:push
+
+# api + worker + web, all watching
+pnpm dev          # UI → http://localhost:5173 · health → http://localhost:4000/healthz</pre>
+<p class="sub" style="margin-top:16px">Production-like: <code>docker compose up --build</code> → UI + API on <code>http://localhost</code>. <code>db-init</code> runs <code>drizzle-kit push</code> before the API starts.</p>
+</section>
+
+<section id="webhook"><h2>Trigger from anywhere</h2><p class="sub">Each flow has a unique path and secret. Sign the body, POST it.</p>
+<pre>SECRET=&lt;the flow's secret&gt;
+BODY='{"hello":"world"}'
+SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$SECRET" -hex | awk '{print $2}')
+curl -X POST http://localhost/webhook/&lt;path&gt; \
+  -H "Content-Type: application/json" \
+  -H "x-flowforge-signature: $SIG" \
+  -d "$BODY"</pre></section>
+
+<section id="test"><h2>Quality built in</h2><p class="sub">CI runs lint, typecheck, test, build and Docker image builds.</p>
+<div class="tbl"><table>
+<tr><td><code>pnpm typecheck</code></td><td><code>tsc --noEmit</code> across all workspace packages</td></tr>
+<tr><td><code>pnpm lint</code></td><td>Biome checks per package + repo-wide</td></tr>
+<tr><td><code>pnpm test</code></td><td>Vitest: graph ordering, credential crypto, HTTP action, delay, queue payloads, web components</td></tr>
+<tr><td><code>pnpm build</code></td><td>Compile packages + <code>vite build</code></td></tr>
+<tr><td><code>pnpm test:e2e</code></td><td>Playwright smoke test against the Docker stack</td></tr>
+</table></div></section>
+
+<footer>FlowForge · <a href="https://github.com/NiepresJohn/flowforge">github.com/NiepresJohn/flowforge</a> · see <a href="https://github.com/NiepresJohn/flowforge/blob/main/CONTRIBUTING.md">CONTRIBUTING</a> &amp; <a href="https://github.com/NiepresJohn/flowforge/blob/main/CHANGELOG.md">CHANGELOG</a></footer>
+</div>
+</body>
+</html>

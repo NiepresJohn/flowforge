@@ -23,7 +23,10 @@ updates:
       - "automated"
 
   - package-ecosystem: "docker"
-    directory: "/"
+    directories:
+      - "/apps/api"
+      - "/apps/web"
+      - "/apps/worker"
     schedule:
       interval: "weekly"
     labels:

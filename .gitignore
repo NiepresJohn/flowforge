@@ -9,3 +9,6 @@ playwright-report/
 test-results/
 .eslintcache
 .commandcode/
+*.tsbuildinfo
+.env.*
+!.env.example

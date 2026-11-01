@@ -40,11 +40,7 @@ Thank you for your interest in contributing! This document will help you get sta
    docker compose up -d postgres redis
    ```
 
-5. **Initialize the database:**
-
-   ```sh
-   pnpm --filter @flowforge/db db:push
-   ```
+5. **Database:** migrations are applied automatically when the API starts.
 
 6. **Start development servers:**
 
@@ -152,7 +148,7 @@ pnpm test:e2e
 
 1. Update the schema in `packages/db/src/schema.ts`
 2. Generate a migration: `pnpm --filter @flowforge/db db:generate`
-3. Test the migration: `pnpm --filter @flowforge/db db:push`
+3. Test the migration by restarting the API (it applies pending migrations on startup)
 
 ## Code Review
 
@@ -172,4 +168,4 @@ All submissions require review before merging. Reviewers will check for:
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the same license as the project.
+By contributing, you agree that your contributions will be licensed under the same license as the project (MIT).

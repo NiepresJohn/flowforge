@@ -68,13 +68,7 @@ External service ──POST──▶ /webhook/:path (api) ──▶ BullMQ ─�
    docker compose up -d postgres redis
    ```
 
-4. Push the DB schema:
-
-   ```sh
-   pnpm --filter @flowforge/db db:push
-   ```
-
-5. Start the API, worker, and web app (three processes, all watch for changes):
+4. Start the API, worker, and web app (three processes, all watch for changes):
 
    ```sh
    pnpm dev
@@ -83,6 +77,19 @@ External service ──POST──▶ /webhook/:path (api) ──▶ BullMQ ─�
    - Web UI: http://localhost:5173 (Vite dev server proxies `/api` and `/ws` to :4000)
    - API health: http://localhost:4000/healthz
 
+## Environment variables
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `DATABASE_URL` | `postgres://postgres:postgres@localhost:5432/flowforge` | Postgres connection string |
+| `REDIS_URL` | `redis://localhost:6379` | Redis connection string (queue + event bus) |
+| `BASE_URL` | `http://localhost:4000` | Public API URL used for webhook callbacks |
+| `API_KEY` | empty | Bearer key required by the API; empty disables auth (dev only) |
+| `CREDENTIAL_ENCRYPTION_KEY` | none | 64-char hex key (or passphrase) for AES-256-GCM credential storage. `openssl rand -hex 32` |
+| `EXECUTOR_CONCURRENCY` | `5` | Parallel flow executions per worker |
+| `PORT` | `4000` | API listen port |
+| `QUEUE_NAME` | `flow-executions` | BullMQ queue name |
+
 ## Docker (production-like)
 
 ```sh
@@ -90,7 +97,8 @@ docker compose up --build
 ```
 
 - Web UI + API on http://localhost (nginx on :80 reverse-proxies `/api`, `/ws`, `/webhook/`)
-- `db-init` runs `drizzle-kit push` once before the API starts
+- The API applies database migrations automatically on startup
+- Set `API_KEY` and `CREDENTIAL_ENCRYPTION_KEY` in `.env` before exposing it anywhere
 
 ## Testing
 
@@ -121,3 +129,11 @@ curl -X POST http://localhost/webhook/<path> \
 - Flows are stored as a trigger node plus action nodes and directed edges in Postgres (`flows`, `flow_nodes`, `flow_edges`).
 - The executor topologically sorts the graph (Kahn's algorithm), rejects cycles, and runs each reachable node in order, persisting per-step input/output/error.
 - Stored credentials are AES-256-GCM encrypted with `CREDENTIAL_ENCRYPTION_KEY`; decryption happens only inside the worker.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [CHANGELOG](CHANGELOG.md).
+
+## License
+
+[MIT](LICENSE)
